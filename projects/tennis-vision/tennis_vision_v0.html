@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tennis Vision V0</title>
+<style>
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel2:#20242d; --text:#f5f7fb; --muted:#9aa3b2;
+  --accent:#d7ff3f; --line:#2c3340; --danger:#ff6b6b; --ok:#71e48c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit}
+.app{max-width:1380px;margin:0 auto;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}
+.brand{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.badge{display:inline-flex;background:#262b35;border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,.7fr);gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+h2{font-size:16px;margin:0 0 12px} h3{font-size:14px;margin:18px 0 10px;color:#dfe4ec}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px;min-width:140px}
+label{font-size:12px;color:var(--muted)}
+input,select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px}
+input[type=number]{width:110px}
+input[type=range]{width:170px}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:10px;padding:9px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:#0e1116;border-color:var(--accent);font-weight:800}
+button.danger{border-color:#5e2b2b;color:#ffb2b2}
+button:disabled{opacity:.45;cursor:not-allowed}
+.video-wrap{position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:16/9;border:1px solid var(--line)}
+video{width:100%;height:100%;display:block;background:#000}
+.scoreboard,.shotbox{position:absolute;top:14px;padding:10px 12px;border-radius:10px;background:rgba(7,9,12,.78);backdrop-filter:blur(8px);font-weight:700}
+.scoreboard{left:14px;min-width:185px}
+.shotbox{right:14px;min-width:170px;text-align:right}
+.scoreline{display:grid;grid-template-columns:1fr 28px 28px 36px;gap:7px;font-size:13px;padding:2px 0}
+.small{font-size:12px;color:var(--muted)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:8px 10px}
+.tab.active{background:var(--accent);color:#111;font-weight:800}
+.tabpane{display:none}.tabpane.active{display:block}
+.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.metric .v{font-size:22px;font-weight:800;margin-top:5px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+.table-wrap{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+.kpi{font-weight:800;color:var(--accent)}
+.note{background:#11151c;border:1px dashed #343c49;border-radius:12px;padding:12px;color:var(--muted);font-size:12px;line-height:1.55}
+.event-list{display:flex;gap:6px;flex-wrap:wrap}
+.event-list button{padding:7px 9px;font-size:12px}
+.timeline{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.segment{font-size:11px;background:#252b35;border:1px solid #353d4a;border-radius:999px;padding:5px 8px}
+.out-good{color:var(--ok)} .out-bad{color:var(--danger)}
+footer{margin-top:16px;color:var(--muted);font-size:12px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr 1fr}}
+@media print{
+  body{background:white;color:black}
+  header,.video-wrap,.controls,.tabs,#setupPane,#editPane,#logPane,footer,.no-print{display:none!important}
+  .grid{display:block}.panel{border:none;background:white}.metric{background:white;color:black;border:1px solid #ddd}
+}
+
+.shotbox{width:250px}
+.shot-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.speed-pill{font-size:12px;background:rgba(215,255,63,.14);color:var(--accent);border:1px solid rgba(215,255,63,.35);padding:4px 7px;border-radius:999px;white-space:nowrap}
+.mini-court-wrap{margin-top:8px}
+.mini-court-wrap{display:flex;flex-direction:column;align-items:flex-end}
+.mini-court{position:relative;width:94px;height:174px;border:1.5px solid rgba(255,255,255,.75);border-radius:3px;background:rgba(64,121,74,.32);overflow:hidden}
+.mini-court:before,.mini-court:after{content:"";position:absolute;left:14%;right:14%;border-top:1px solid rgba(255,255,255,.58)}
+.mini-court:before{top:22%}.mini-court:after{bottom:22%}
+.court-net{position:absolute;left:0;right:0;top:50%;border-top:2px solid rgba(255,255,255,.88)}
+.service-line{position:absolute;left:14%;right:14%;border-top:1px solid rgba(255,255,255,.62)}
+.service-line.top{top:36%}.service-line.bottom{bottom:36%}
+.center-line{position:absolute;top:22%;bottom:22%;left:50%;border-left:1px solid rgba(255,255,255,.58)}
+.court-caption{width:94px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:5px;color:#c8cfda;font-size:10px}
+.bounce-dot{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid rgba(0,0,0,.7);transform:translate(-50%,-50%);left:50%;top:25%;box-shadow:0 0 0 3px rgba(215,255,63,.15)}
+.error-x{position:absolute;display:none;transform:translate(-50%,-50%);font-size:28px;line-height:1;color:#ff5757;font-weight:900;text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.court-caption{display:flex;justify-content:space-between;gap:8px;margin-top:5px;color:#c8cfda;font-size:10px}
+
+
+/* Compact playback overlays inspired by SwingVision's video-first proportions */
+.scoreboard,.shotbox{
+  top:10px;
+  padding:6px 7px;
+  border-radius:7px;
+  background:rgba(7,9,12,.68);
+  backdrop-filter:blur(5px);
+}
+.scoreboard{
+  left:10px;
+  min-width:132px;
+}
+.scoreline{
+  grid-template-columns:1fr 18px 18px 24px;
+  gap:4px;
+  font-size:10px;
+  line-height:1.15;
+  padding:1px 0;
+}
+.scoreboard .small{font-size:8px}
+
+.shotbox{
+  right:10px;
+  width:132px;
+  min-width:132px;
+  text-align:left;
+}
+.shot-title-row{
+  gap:5px;
+}
+#shotMain{
+  font-size:10px;
+  line-height:1.1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#shotSub{
+  font-size:8px;
+  line-height:1.15;
+  margin-top:2px;
+  color:#d7dce5;
+}
+.speed-pill{
+  font-size:8px;
+  padding:2px 4px;
+  border-radius:999px;
+}
+.mini-court-wrap{
+  margin-top:5px;
+  align-items:flex-end;
+}
+.mini-court{
+  width:54px;
+  height:100px;
+  border-width:1px;
+}
+.mini-court:before,.mini-court:after,
+.service-line,.center-line{
+  border-width:1px;
+}
+.court-net{border-top-width:1px}
+.bounce-dot{
+  width:8px;
+  height:8px;
+  border-width:1px;
+  box-shadow:0 0 0 2px rgba(215,255,63,.12)
+}
+.error-x{
+  font-size:18px;
+}
+.court-caption{
+  width:100%;
+  margin-top:3px;
+  font-size:7.5px;
+  line-height:1.15;
+  gap:1px;
+}
+@media (max-width:700px){
+  .scoreboard{min-width:118px;left:7px;top:7px}
+  .shotbox{width:118px;min-width:118px;right:7px;top:7px}
+  .mini-court{width:48px;height:89px}
+}
+
+
+/* Screenshot-inspired compact match overlay */
+.shotbox{
+  top:8px!important;
+  right:8px!important;
+  width:112px!important;
+  min-width:112px!important;
+  padding:0!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+  border-radius:8px!important;
+  text-align:left!important;
+  font-weight:700!important;
+}
+.court-card{
+  background:rgba(10,12,15,.78);
+  border-radius:8px;
+  padding:7px 8px;
+  box-shadow:0 1px 5px rgba(0,0,0,.28);
+}
+.mini-court{
+  position:relative;
+  width:78px!important;
+  height:118px!important;
+  margin:0 auto;
+  border:1px solid rgba(255,255,255,.73)!important;
+  background:rgba(20,27,27,.36)!important;
+  overflow:visible!important;
+}
+.mini-court:before,.mini-court:after{
+  left:12%!important;
+  right:12%!important;
+}
+.court-net{
+  border-top:1px solid rgba(255,255,255,.82)!important;
+}
+.service-line{
+  left:12%!important;
+  right:12%!important;
+}
+.center-line{
+  border-left:1px solid rgba(255,255,255,.60)!important;
+}
+.markers-layer{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.court-marker{
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(0,0,0,.65);
+  box-shadow:0 0 0 1px rgba(255,255,255,.12);
+}
+.court-marker.player-a{background:#56d57d}
+.court-marker.player-b{background:#4ec5d7}
+.court-marker.current{background:#ff9f2f;width:7px;height:7px}
+.court-marker.error{
+  width:auto;height:auto;border:0;background:transparent;
+  color:#ff5a5f;font-size:14px;font-weight:900;line-height:1;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
+  box-shadow:none;
+}
+.shot-info-strip{
+  margin-top:4px;
+  min-height:42px;
+  border-radius:6px;
+  background:rgba(7,10,10,.82);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:5px;
+  padding:5px 7px;
+  box-shadow:0 1px 4px rgba(0,0,0,.22);
+}
+.shot-labels{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  line-height:1.03;
+}
+#spinLabel{
+  font-size:8px;
+  color:#4de58a;
+  font-weight:700;
+  white-space:nowrap;
+}
+#shotMain{
+  font-size:10px!important;
+  color:#4de58a;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:60px;
+}
+.shot-direction{
+  font-size:7px!important;
+  color:rgba(255,255,255,.68)!important;
+  margin-top:2px!important;
+  line-height:1!important;
+}
+.speed-stack{
+  min-width:33px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:center;
+  line-height:.9;
+}
+.speed-stack strong{
+  font-size:15px;
+  color:#f4f6f7;
+  font-weight:800;
+}
+.speed-stack span{
+  margin-top:3px;
+  font-size:7px;
+  color:#e5e7e8;
+  letter-spacing:.02em;
+}
+@media (max-width:700px){
+  .shotbox{
+    width:98px!important;
+    min-width:98px!important;
+    top:6px!important;right:6px!important;
+  }
+  .court-card{padding:6px}
+  .mini-court{width:68px!important;height:103px!important}
+  .shot-info-strip{padding:4px 6px;min-height:38px}
+  #shotMain{font-size:9px!important;max-width:52px}
+  #spinLabel{font-size:7px}
+  .speed-stack strong{font-size:13px}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Tennis Vision <span class="kpi">V0</span></div>
+  </header>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="video-wrap">
+        <video id="video" controls playsinline></video>
+        <div class="scoreboard">
+          <div class="scoreline small"><span>PLAYER</span><span>S</span><span>G</span><span>P</span></div>
+          <div class="scoreline"><span id="nameA">Player A</span><span id="setA">0</span><span id="gameA">0</span><span id="pointA">0</span></div>
+          <div class="scoreline"><span id="nameB">Player B</span><span id="setB">0</span><span id="gameB">0</span><span id="pointB">0</span></div>
+        </div>
+        <div class="shotbox">
+          <div class="court-card">
+            <div class="mini-court" id="miniCourt">
+              <div class="court-net"></div>
+              <div class="service-line top"></div>
+              <div class="service-line bottom"></div>
+              <div class="center-line"></div>
+              <div id="markersLayer" class="markers-layer"></div>
+            </div>
+          </div>
+          <div class="shot-info-strip">
+            <div class="shot-labels">
+              <span id="spinLabel">—</span>
+              <strong id="shotMain">—</strong>
+              <span id="shotSub" class="shot-direction">—</span>
+            </div>
+            <div class="speed-stack">
+              <strong id="shotSpeed">—</strong>
+              <span>KM/H</span>
+            </div>
+          </div>
+          <span id="bounceLabel" style="display:none"></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input type="file" id="videoFile" accept="video/*" />
+        <button id="pointWinA">A 득점</button>
+        <button id="pointWinB">B 득점</button>
+        <button id="undoScore">점수 되돌리기</button>
+        <button class="primary" id="saveMatch">경기 저장</button>
+      </div>
+
+      <div class="timeline" id="timeline"></div>
+
+      <hr />
+
+      <div class="tabs">
+        <button class="tab active" data-tab="setupPane">경기 설정</button>
+        <button class="tab" data-tab="editPane">편집 설정</button>
+        <button class="tab" data-tab="logPane">샷/이벤트 기록</button>
+        <button class="tab" data-tab="analysisPane">경기 분석</button>
+        <button class="tab" data-tab="historyPane">상대 전적</button>
+      </div>
+
+      <div id="setupPane" class="tabpane active">
+        <h2>경기 설정</h2>
+        <div class="row">
+          <div class="field">
+            <label>경기 유형</label>
+            <select id="matchType">
+              <option value="singles">단식</option>
+              <option value="doubles">복식</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>내 프로필</label>
+            <input id="playerA" value="나" />
+          </div>
+          <div class="field">
+            <label>상대 / 상대팀 1</label>
+            <input id="playerB" value="상대" />
+          </div>
+          <div class="field double-only" style="display:none">
+            <label>내 파트너</label>
+            <input id="playerA2" placeholder="파트너 이름" />
+          </div>
+          <div class="field double-only" style="display:none">
+            <label>상대팀 2</label>
+            <input id="playerB2" placeholder="상대 파트너" />
+          </div>
+        </div>
+        <div class="note" style="margin-top:12px">
+          같은 이름으로 경기를 저장하면 상대별 전적에 계속 누적됩니다. 실제 자동 선수 식별/트래킹 모델은 다음 단계에서 연결합니다.
+        </div>
+      </div>
+
+      <div id="editPane" class="tabpane">
+        <h2>편집 강도</h2>
+        <div class="row no-print">
+          <button class="preset" data-pre="0.8" data-post="0.5" data-gap="0.6">매우 타이트</button>
+          <button class="preset primary" data-pre="1.5" data-post="1.0" data-gap="1.0">타이트</button>
+          <button class="preset" data-pre="3.0" data-post="2.0" data-gap="2.0">보통</button>
+          <button class="preset" data-pre="5.0" data-post="4.0" data-gap="3.0">여유 있게</button>
+        </div>
+        <h3>초 단위 직접 설정</h3>
+        <div class="row">
+          <div class="field"><label>서브/플레이 시작 전</label><input id="preRoll" type="number" step="0.1" min="0" max="10" value="1.5" /></div>
+          <div class="field"><label>포인트 종료 후</label><input id="postRoll" type="number" step="0.1" min="0" max="10" value="1.0" /></div>
+          <div class="field"><label>퍼스트→세컨드 사이 유지</label><input id="faultGap" type="number" step="0.1" min="0" max="10" value="1.0" /></div>
+        </div>
+        <div class="note" style="margin-top:12px">
+          목표 편집: 긴 서브 루틴·공 줍기·대기시간은 삭제하고, 실제 타구 직전부터 포인트 종료 직후까지만 남깁니다. 퍼스트 서브 실패는 반드시 남기며 세컨드 서브와 같은 포인트로 연결합니다.
+        </div>
+      </div>
+
+      <div id="logPane" class="tabpane">
+        <h2>샷 로그</h2>
+        <div class="row">
+          <div class="field"><label>선수</label><select id="shotPlayer"><option>A</option><option>B</option></select></div>
+          <div class="field"><label>샷</label><select id="shotType"><option>Serve</option><option>Forehand</option><option>Backhand</option><option>Volley</option><option>Overhead</option><option>Return</option></select></div>
+          <div class="field"><label>구질</label><select id="spin"><option>Topspin</option><option>Flat</option><option>Slice</option><option>Kick</option><option>Unknown</option></select></div>
+          <div class="field"><label>방향</label><select id="direction"><option>Cross</option><option>DTL</option><option>Middle</option><option>Wide</option><option>Body</option><option>T</option></select></div>
+          <div class="field"><label>속도(km/h)</label><input id="speedKmh" type="number" min="0" step="1" placeholder="100" /></div>
+          <div class="field"><label>바운드 위치</label><select id="bounceZone"><option value="deep_left">상대 깊은 왼쪽</option><option value="deep_mid">상대 깊은 중앙</option><option value="deep_right">상대 깊은 오른쪽</option><option value="short_left">상대 짧은 왼쪽</option><option value="short_mid">상대 짧은 중앙</option><option value="short_right">상대 짧은 오른쪽</option><option value="net">네트</option><option value="long">베이스라인 아웃</option><option value="wide_left">왼쪽 사이드 아웃</option><option value="wide_right">오른쪽 사이드 아웃</option></select></div>
+          <div class="field"><label>결과</label><select id="result"><option>In</option><option>Winner</option><option>Ace</option><option>Net Error</option><option>Long Error</option><option>Wide Error</option><option>Forced Error</option><option>Unforced Error</option><option>First Serve Fault</option><option>Double Fault</option></select></div>
+          <div class="field"><label>아웃 거리(cm)</label><input id="outCm" type="number" min="0" step="1" placeholder="0" /></div>
+        </div>
+        <div class="controls">
+          <button class="primary" id="addShot">현재 시점 샷 추가</button>
+        </div>
+
+        <h3>빠른 이벤트</h3>
+        <div class="event-list">
+          <button data-event="Point Start">포인트 시작</button>
+          <button data-event="First Serve Fault">퍼스트 폴트</button>
+          <button data-event="Second Serve">세컨드 서브</button>
+          <button data-event="Rally End">랠리 종료</button>
+          <button data-event="Ball Pickup">공 줍기</button>
+          <button data-event="Net Error">네트</button>
+          <button data-event="Long Error">롱</button>
+          <button data-event="Wide Error">와이드</button>
+          <button data-event="Ace">에이스</button>
+          <button data-event="Winner">위너</button>
+        </div>
+
+        <h3>기록</h3>
+        <div class="table-wrap">
+          <table id="logTable">
+            <thead><tr><th>시간</th><th>선수</th><th>샷</th><th>구질</th><th>방향</th><th>속도</th><th>바운드</th><th>결과</th><th>Out</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="analysisPane" class="tabpane">
+        <h2>경기 분석</h2>
+        <div class="metric-grid">
+          <div class="metric"><div class="small">A 퍼스트서브 성공률</div><div class="v" id="aFirst">—</div></div>
+          <div class="metric"><div class="small">B 퍼스트서브 성공률</div><div class="v" id="bFirst">—</div></div>
+          <div class="metric"><div class="small">A 에이스</div><div class="v" id="aAce">0</div></div>
+          <div class="metric"><div class="small">B 에이스</div><div class="v" id="bAce">0</div></div>
+          <div class="metric"><div class="small">A 포인트 획득</div><div class="v" id="aPoints">0</div></div>
+          <div class="metric"><div class="small">B 포인트 획득</div><div class="v" id="bPoints">0</div></div>
+          <div class="metric"><div class="small">A 에러</div><div class="v" id="aErr">0</div></div>
+          <div class="metric"><div class="small">B 에러</div><div class="v" id="bErr">0</div></div>
+        </div>
+        <h3>에러 분포</h3>
+        <div id="errorSummary" class="note">샷 로그가 쌓이면 네트 / 롱 / 와이드 / 아웃 거리 통계를 보여줍니다.</div>
+        <h3>플레이 분석 요약</h3>
+        <div id="coachSummary" class="note">경기 데이터가 쌓이면 장점·단점·상대 패턴·추천 경기 운영을 분석할 수 있는 구조로 저장됩니다.</div>
+        <div class="controls no-print">
+          <button id="printReport">PDF로 인쇄</button>
+          <button id="exportCSV">CSV 내보내기</button>
+          <button id="exportJSON">JSON 내보내기</button>
+        </div>
+      </div>
+
+      <div id="historyPane" class="tabpane">
+        <h2>상대별 전적</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>상대</th><th>경기</th><th>승</th><th>패</th><th>최근 결과</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>V0 구현 상태</h2>
+      <div class="note">
+        <b class="out-good">현재 사용 가능</b><br>
+        • 영상 업로드/재생<br>
+        • 단식/복식 설정<br>
+        • 선수 이름 기억 구조<br>
+        • 편집 강도 초 단위 설정<br>
+        • 영상 위 스코어보드<br>
+        • 샷/구질/방향/에러/아웃 거리 로그<br>
+        • 포인트 점수 기록<br>
+        • 상대별 전적 누적<br>
+        • CSV/JSON/PDF 리포트 출력
+        <br><br>
+        <b class="out-bad">다음 연결 대상</b><br>
+        • 자동 공/선수 추적 AI<br>
+        • 실제 서브 임팩트 자동 탐지<br>
+        • 공 줍기 자동 삭제<br>
+        • 퍼스트 폴트→세컨드 자동 연결<br>
+        • Topspin/Flat/Slice 자동 분류<br>
+        • 자동 In/Out 및 아웃 거리 측정<br>
+        • 최종 편집 영상 렌더링
+      </div>
+
+      <h3>편집 규칙 미리보기</h3>
+      <div id="editPreview" class="note"></div>
+
+      <h3>테스트 방법</h3>
+      <div class="note">
+        1. 테니스 영상을 업로드합니다.<br>
+        2. 실제 포인트 장면으로 이동합니다.<br>
+        3. 샷/이벤트를 몇 개 기록해봅니다.<br>
+        4. 점수와 통계가 원하는 방식인지 확인합니다.<br>
+        5. 불편한 부분을 시간대와 함께 알려주면 다음 버전에서 수정합니다.
+      </div>
+    </aside>
+  </div>
+  <footer>Tennis Vision V0 · 로컬 테스트용 프로토타입</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let logs = [];
+let events = [];
+let scoreHistory = [];
+let score = {sets:[0,0], games:[0,0], points:[0,0], rawPoints:[0,0]};
+const pointLabels = ["0","15","30","40"];
+
+function tstr(sec){
+  if(!isFinite(sec)) return "00:00.0";
+  const m=Math.floor(sec/60), s=sec-m*60;
+  return String(m).padStart(2,"0")+":"+s.toFixed(1).padStart(4,"0");
+}
+function syncNames(){
+  $("nameA").textContent = $("playerA").value || "Player A";
+  $("nameB").textContent = $("playerB").value || "Player B";
+}
+["playerA","playerB"].forEach(id=>$(id).addEventListener("input",syncNames));
+
+$("matchType").addEventListener("change",e=>{
+  document.querySelectorAll(".double-only").forEach(x=>x.style.display=e.target.value==="doubles"?"flex":"none");
+});
+
+$("videoFile").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  $("video").src=URL.createObjectURL(f);
+});
+
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".tabpane").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active"); $(btn.dataset.tab).classList.add("active");
+  refreshAnalysis(); refreshHistory();
+}));
+
+document.querySelectorAll(".preset").forEach(btn=>btn.addEventListener("click",()=>{
+  $("preRoll").value=btn.dataset.pre; $("postRoll").value=btn.dataset.post; $("faultGap").value=btn.dataset.gap;
+  document.querySelectorAll(".preset").forEach(x=>x.classList.remove("primary")); btn.classList.add("primary");
+  updateEditPreview();
+}));
+["preRoll","postRoll","faultGap"].forEach(id=>$(id).addEventListener("input",()=>{
+  document.querySelectorAll(".preset").forEach(x=>x.classList.remove("primary")); updateEditPreview();
+}));
+function updateEditPreview(){
+  $("editPreview").innerHTML =
+    `플레이 시작 <b>${Number($("preRoll").value).toFixed(1)}초 전</b>부터 유지<br>`+
+    `포인트 종료 <b>${Number($("postRoll").value).toFixed(1)}초 후</b>까지 유지<br>`+
+    `퍼스트→세컨드 사이 불필요 구간은 최대 <b>${Number($("faultGap").value).toFixed(1)}초</b>만 남김`;
+}
+updateEditPreview();
+
+function renderScore(){
+  $("setA").textContent=score.sets[0]; $("setB").textContent=score.sets[1];
+  $("gameA").textContent=score.games[0]; $("gameB").textContent=score.games[1];
+  const a=score.points[0], b=score.points[1];
+  if(a>=3 && b>=3){
+    $("pointA").textContent = a===b ? "40" : a>b ? "AD" : "40";
+    $("pointB").textContent = a===b ? "40" : b>a ? "AD" : "40";
+  }else{
+    $("pointA").textContent=pointLabels[Math.min(a,3)];
+    $("pointB").textContent=pointLabels[Math.min(b,3)];
+  }
+}
+function winPoint(p){
+  scoreHistory.push(JSON.stringify(score));
+  score.rawPoints[p]++;
+  score.points[p]++;
+  const o=1-p;
+  if(score.points[p]>=4 && score.points[p]-score.points[o]>=2){
+    score.games[p]++; score.points=[0,0];
+    if(score.games[p]>=6 && score.games[p]-score.games[o]>=2){
+      score.sets[p]++; score.games=[0,0];
+    }
+  }
+  renderScore(); refreshAnalysis();
+}
+$("pointWinA").onclick=()=>winPoint(0); $("pointWinB").onclick=()=>winPoint(1);
+$("undoScore").onclick=()=>{ if(scoreHistory.length){ score=JSON.parse(scoreHistory.pop()); renderScore(); refreshAnalysis(); } };
+
+
+const bounceMap = {
+  deep_left:[28,12], deep_mid:[50,12], deep_right:[72,12],
+  short_left:[28,34], short_mid:[50,34], short_right:[72,34],
+  net:[50,50], long:[50,2], wide_left:[5,24], wide_right:[95,24]
+};
+const bounceLabels = {
+  deep_left:"깊은 왼쪽", deep_mid:"깊은 중앙", deep_right:"깊은 오른쪽",
+  short_left:"짧은 왼쪽", short_mid:"짧은 중앙", short_right:"짧은 오른쪽",
+  net:"네트", long:"베이스라인 아웃", wide_left:"왼쪽 사이드 아웃", wide_right:"오른쪽 사이드 아웃"
+};
+function bounceZoneLabel(z){return bounceLabels[z]||"바운드 위치 —"}
+function updateMiniCourt(l){
+  renderCourtMarkers();
+}
+function renderCourtMarkers(){
+  const layer=$("markersLayer");
+  if(!layer) return;
+  layer.innerHTML="";
+  const recent=logs.slice(-8);
+  recent.forEach((l,idx)=>{
+    const pos=bounceMap[l.bounceZone]||[50,25];
+    const marker=document.createElement("div");
+    const isErr=/Error|Fault/.test(l.result) || ["net","long","wide_left","wide_right"].includes(l.bounceZone);
+    const isCurrent=idx===recent.length-1;
+    marker.className="court-marker "+(isErr?"error":(l.player==="A"?"player-a":"player-b"))+(isCurrent&&!isErr?" current":"");
+    marker.style.left=pos[0]+"%";
+    marker.style.top=pos[1]+"%";
+    marker.textContent=isErr?"×":"";
+    marker.title=`${l.player} ${l.shot} ${l.result}`;
+    layer.appendChild(marker);
+  });
+}
+
+function addLog(){
+  const l={
+    time:$("video").currentTime||0,
+    player:$("shotPlayer").value,
+    shot:$("shotType").value,
+    spin:$("spin").value,
+    direction:$("direction").value,
+    speedKmh:$("speedKmh").value?Number($("speedKmh").value):null,
+    bounceZone:$("bounceZone").value,
+    result:$("result").value,
+    outCm:$("outCm").value?Number($("outCm").value):null
+  };
+  logs.push(l); renderLogs(); refreshAnalysis();
+  $("shotMain").textContent=l.shot;
+  $("shotSub").textContent=l.direction;
+  $("shotSpeed").textContent=l.speedKmh!=null?`${l.speedKmh}`:"—";
+  $("spinLabel").textContent=l.spin;
+  $("bounceLabel").textContent=bounceZoneLabel(l.bounceZone);
+  updateMiniCourt(l);
+}
+$("addShot").onclick=addLog;
+
+document.querySelectorAll("[data-event]").forEach(btn=>btn.addEventListener("click",()=>{
+  const e={time:$("video").currentTime||0,event:btn.dataset.event};
+  events.push(e);
+  const el=document.createElement("span"); el.className="segment"; el.textContent=`${tstr(e.time)} ${e.event}`;
+  $("timeline").appendChild(el);
+}));
+
+function renderLogs(){
+  const tbody=$("logTable").querySelector("tbody"); tbody.innerHTML="";
+  renderCourtMarkers();
+  logs.slice().reverse().forEach(l=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${tstr(l.time)}</td><td>${l.player}</td><td>${l.shot}</td><td>${l.spin}</td><td>${l.direction}</td><td>${l.speedKmh??""}</td><td>${bounceZoneLabel(l.bounceZone)}</td><td>${l.result}</td><td>${l.outCm??""}</td>`;
+    tr.onclick=()=>{$("video").currentTime=l.time};
+    tbody.appendChild(tr);
+  });
+}
+function stat(player, pred){ return logs.filter(x=>x.player===player && pred(x)).length; }
+function refreshAnalysis(){
+  ["A","B"].forEach((p,i)=>{
+    const serves=stat(p,x=>x.shot==="Serve");
+    const faults=stat(p,x=>x.result==="First Serve Fault");
+    const firstAttempts=Math.max(serves, faults);
+    const pct=firstAttempts ? Math.max(0,Math.round((firstAttempts-faults)/firstAttempts*100))+"%" : "—";
+    $(i===0?"aFirst":"bFirst").textContent=pct;
+    $(i===0?"aAce":"bAce").textContent=stat(p,x=>x.result==="Ace");
+    $(i===0?"aErr":"bErr").textContent=stat(p,x=>/Error|Fault/.test(x.result) && x.result!=="Forced Error");
+  });
+  $("aPoints").textContent=score.rawPoints[0]; $("bPoints").textContent=score.rawPoints[1];
+
+  const nets=logs.filter(x=>x.result==="Net Error").length;
+  const longs=logs.filter(x=>x.result==="Long Error").length;
+  const wides=logs.filter(x=>x.result==="Wide Error").length;
+  const outs=logs.filter(x=>x.outCm!=null).map(x=>x.outCm);
+  const avg=outs.length?(outs.reduce((a,b)=>a+b,0)/outs.length).toFixed(1):"—";
+  $("errorSummary").innerHTML=`네트 <b>${nets}</b> · 롱 <b>${longs}</b> · 와이드 <b>${wides}</b> · 평균 아웃 거리 <b>${avg}${avg==="—"?"":"cm"}</b>`;
+
+  const topErr=[...logs].filter(x=>/Error/.test(x.result));
+  const fh=topErr.filter(x=>x.shot==="Forehand").length, bh=topErr.filter(x=>x.shot==="Backhand").length;
+  $("coachSummary").innerHTML=`현재 기록 기준: 포핸드 에러 <b>${fh}</b>, 백핸드 에러 <b>${bh}</b>. 실제 향후 분석에서는 상대별 득실 패턴, 서브/리턴, 랠리 길이, 에러 위치를 함께 분석합니다.`;
+}
+
+function getMatches(){ try{return JSON.parse(localStorage.getItem("tv_matches")||"[]")}catch{return []} }
+function saveMatches(m){ localStorage.setItem("tv_matches",JSON.stringify(m)); }
+$("saveMatch").onclick=()=>{
+  syncNames();
+  const winner = score.sets[0]!==score.sets[1] ? (score.sets[0]>score.sets[1]?"A":"B") :
+                 score.games[0]!==score.games[1] ? (score.games[0]>score.games[1]?"A":"B") :
+                 score.rawPoints[0]>=score.rawPoints[1] ? "A":"B";
+  const match={
+    date:new Date().toISOString(),
+    type:$("matchType").value,
+    playerA:$("playerA").value||"나",
+    playerB:$("playerB").value||"상대",
+    partnerA:$("playerA2").value||"",
+    partnerB:$("playerB2").value||"",
+    winner, score, logs, events,
+    edit:{pre:Number($("preRoll").value),post:Number($("postRoll").value),faultGap:Number($("faultGap").value)}
+  };
+  const all=getMatches(); all.push(match); saveMatches(all); refreshHistory();
+  localStorage.setItem("tv_profileA",match.playerA);
+  alert("경기 기록을 저장했습니다.");
+};
+function refreshHistory(){
+  const all=getMatches(), me=$("playerA").value||localStorage.getItem("tv_profileA")||"나";
+  const map={};
+  all.filter(m=>m.playerA===me).forEach(m=>{
+    const k=m.playerB; if(!map[k])map[k]={n:0,w:0,l:0,last:""};
+    map[k].n++; if(m.winner==="A")map[k].w++; else map[k].l++;
+    map[k].last=(m.winner==="A"?"승":"패")+" · "+new Date(m.date).toLocaleDateString();
+  });
+  const tbody=$("historyBody"); tbody.innerHTML="";
+  Object.entries(map).forEach(([opp,v])=>{
+    const tr=document.createElement("tr"); tr.innerHTML=`<td>${opp}</td><td>${v.n}</td><td>${v.w}</td><td>${v.l}</td><td>${v.last}</td>`; tbody.appendChild(tr);
+  });
+}
+const savedProfile=localStorage.getItem("tv_profileA"); if(savedProfile){$("playerA").value=savedProfile; syncNames();}
+
+function download(name,text,type){
+  const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
+}
+$("exportJSON").onclick=()=>{
+  download("tennis_match.json",JSON.stringify({score,logs,events,settings:{
+    type:$("matchType").value,playerA:$("playerA").value,playerB:$("playerB").value,
+    preRoll:+$("preRoll").value,postRoll:+$("postRoll").value,faultGap:+$("faultGap").value
+  }},null,2),"application/json");
+};
+$("exportCSV").onclick=()=>{
+  const rows=[["time","player","shot","spin","direction","speed_kmh","bounce_zone","result","out_cm"]];
+  logs.forEach(l=>rows.push([l.time,l.player,l.shot,l.spin,l.direction,l.speedKmh??"",l.bounceZone??"",l.result,l.outCm??""]));
+  download("tennis_shot_log.csv",rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(",")).join("\n"),"text/csv;charset=utf-8");
+};
+$("printReport").onclick=()=>window.print();
+
+refreshAnalysis(); refreshHistory(); renderScore();
+</script>
+</body>
+</html>

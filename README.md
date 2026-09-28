@@ -2,92 +2,97 @@
 
 개인 개발 프로젝트의 기준 저장소입니다.
 
-## 현재 상태
-
-- Repository initialized
-- Source code: 아직 없음
-- Runtime / framework: 아직 미정
-- Dependencies: 아직 없음
-- Build / test configuration: 아직 없음
-- Default branch: `main`
-
-## 개발 관리 원칙
-
-이 저장소의 작업은 다음 원칙으로 관리합니다.
-
-1. 기존에 정상 작동하는 기능을 최대한 보존합니다.
-2. 큰 변경 전에는 현재 상태를 Git commit으로 남깁니다.
-3. 한 작업 단위가 끝날 때마다 변경 내용을 검증하고 commit합니다.
-4. 각 작업 완료 시 다음 내용을 기록합니다.
-   - 무엇을 수정했는지
-   - 어떤 파일을 수정했는지
-   - 테스트 결과
-   - 남은 문제
-5. 프로젝트 구조, 실행 방법, 의존성 또는 주요 기능이 바뀌면 이 README를 함께 갱신합니다.
-6. 비밀번호, API Key, 인증 토큰, 개인정보 등 민감정보는 저장소에 commit하지 않습니다.
-
-## 프로젝트 구조
-
-현재는 초기 상태입니다.
+## 현재 구조
 
 ```text
 chanhwi-dev-projects/
+├── projects/
+│   ├── shoulder-os/
+│   │   ├── V2_사전분석_보고서.md
+│   │   ├── V2_구현_및_검증_결과.md
+│   │   └── README.md
+│   └── tennis-vision/
+│       ├── tennis_vision_v0.html
+│       └── README.md
+├── docs/
+│   ├── MOBILE_FEEDBACK_SPEC.md
+│   └── PROJECT_MIGRATION_STATUS.md
 └── README.md
 ```
 
-향후 실제 프로젝트가 추가되면 프로젝트별 디렉터리로 분리합니다.
+## 프로젝트
 
-예시:
+### Shoulder OS
+V2.0.0 source ZIP과 설치 APK는 Google Drive에 보존되어 있습니다. GitHub에는 현재 분석/검증 문서를 이전했고, 다음 단계에서 source ZIP을 파일 단위 프로젝트 구조로 전개합니다.
+
+### Tennis Vision
+현재 확보 가능한 V0 HTML 프로토타입을 GitHub에 이전했습니다. Android debug APK는 Google Drive에서 관리합니다.
+
+## APK 설치 파일
+
+Google Drive의 `App Builds - Install` 폴더를 설치 파일의 기준 위치로 사용합니다.
+
+현재:
+- `Shoulder-OS-V2.0.0-test-release.apk`
+- `TennisVision-v0-debug.apk`
+
+## 개발 관리 원칙
+
+1. 정상 작동 중인 기능을 우선 보존합니다.
+2. 큰 변경 전 현재 상태를 commit합니다.
+3. 작업 단위가 끝날 때마다 테스트 후 commit합니다.
+4. 작업 완료 보고에는 수정 내용, 수정 파일, 테스트 결과, 남은 문제를 기록합니다.
+5. 프로젝트 상태/실행 방법/의존성이 바뀌면 README를 갱신합니다.
+6. 비밀번호, API key, 인증 token 등 비밀값은 commit하지 않습니다.
+7. APK/대형 설치 파일은 Google Drive에서 관리하고 GitHub에는 소스와 문서를 우선 보존합니다.
+
+## 모바일 개선 메모
+
+휴대폰에서 앱을 사용하면서 **음성 또는 텍스트로 개선사항을 즉시 기록**하는 공통 기능을 추가할 계획입니다.
+
+상세 설계: `docs/MOBILE_FEEDBACK_SPEC.md`
 
 ```text
-chanhwi-dev-projects/
-├── 01-body-calendar/
-├── 02-market-dashboard/
-├── 03-tennis-app/
-├── docs/
-└── README.md
+음성/텍스트 메모
+→ 원문 보존
+→ AI 요약·분류
+→ 개선 Inbox
+→ 검토 후 개발 작업/GitHub Issue로 전환
 ```
 
 ## 실행 방법
 
-아직 실행 가능한 애플리케이션이 없습니다.
+### Tennis Vision V0
+`projects/tennis-vision/tennis_vision_v0.html` 을 브라우저에서 실행합니다.
 
-프로젝트가 추가되면 아래 내용을 프로젝트별로 명시합니다.
-
-- 요구 런타임 및 버전
-- 설치 명령
-- 환경변수 설정
-- 개발 서버 실행 명령
-- 빌드 명령
-- 테스트 명령
-
-## 의존성
-
-현재 외부 라이브러리 의존성은 없습니다.
+### Shoulder OS
+현재 GitHub 이전 단계에서는 Google Drive의 V2.0.0 source ZIP이 전체 원본입니다. Flutter 프로젝트 트리 전개 후 빌드 절차를 이 README에 추가합니다.
 
 ## 테스트 상태
 
-현재 테스트할 소스 코드가 없습니다.
+- Shoulder OS: 당시 기록상 정적 검사 오류 0건, 자동 테스트 4/4, release APK 빌드 성공
+- Tennis Vision HTML: 현재 자동 테스트 미구성
+
+과거 테스트 기록은 기준선이며 GitHub 이전 후 재현 테스트가 필요합니다.
 
 ## 우선순위
 
-### P0 — 기반 확정
-- 첫 실제 개발 프로젝트 선택
-- 기술 스택 확정
-- 로컬 프로젝트와 GitHub Repository 연결
-- 프로젝트별 `.gitignore` 및 환경변수 관리 방식 설정
+### P0
+- Shoulder OS source ZIP 파일 단위 전개
+- Tennis Vision 최신 LocalEditor 전체 소스 회수
+- Repository Private 전환 검토
+- 각 프로젝트 빌드/실행 재현
 
-### P1 — 품질 관리
-- lint / format / test 체계 추가
-- 실행 및 빌드 명령 문서화
-- 정상 동작 기준 정의
+### P1
+- 공통 모바일 개선 메모: 음성/텍스트 + 로컬 Inbox
+- AI 요약/분류
+- lint / format / test 자동화
 
-### P2 — 자동화
-- GitHub Actions를 통한 자동 테스트/빌드
-- 릴리스 및 변경 이력 관리 체계 정비
+### P2
+- GitHub Actions
+- 개선 메모 → GitHub Issue 전환
+- APK 버전/빌드 이력 자동 관리
 
-## 작업 기록
+## 변경 이력
 
-Git commit history를 프로젝트 작업 이력의 기준으로 사용합니다.
-
-커밋 메시지는 개발 경험이 없는 사람도 변경 목적을 이해할 수 있도록 작성합니다.
+Git commit history를 작업 이력의 기준으로 사용합니다.
