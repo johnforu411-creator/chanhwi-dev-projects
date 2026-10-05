@@ -10,6 +10,8 @@ chanhwi-dev-projects/
 │   ├── shoulder-os/
 │   │   ├── V2_사전분석_보고서.md
 │   │   ├── V2_구현_및_검증_결과.md
+│   │   ├── lib/ · test/ · assets/ · android/
+│   │   ├── docs/ · tool/ · pubspec.yaml · pubspec.lock
 │   │   └── README.md
 │   └── tennis-vision/
 │       ├── tennis_vision_v0.html
@@ -23,7 +25,7 @@ chanhwi-dev-projects/
 ## 프로젝트
 
 ### Shoulder OS
-V2.0.0 source ZIP과 설치 APK는 Google Drive에 보존되어 있습니다. GitHub에는 현재 분석/검증 문서를 이전했고, 다음 단계에서 source ZIP을 파일 단위 프로젝트 구조로 전개합니다.
+V2.1.0 소스를 `projects/shoulder-os/`에 전개했습니다. 원본 ZIP/APK는 Google Drive에 보존합니다. [버전 비교·마이그레이션·미검증 항목](projects/shoulder-os/docs/MIGRATION_V2_0_TO_V2_1.md)을 확인하세요.
 
 ### Tennis Vision
 현재 확보 가능한 V0 HTML 프로토타입을 GitHub에 이전했습니다. Android debug APK는 Google Drive에서 관리합니다.
@@ -33,7 +35,7 @@ V2.0.0 source ZIP과 설치 APK는 Google Drive에 보존되어 있습니다. Gi
 Google Drive의 `App Builds - Install` 폴더를 설치 파일의 기준 위치로 사용합니다.
 
 현재:
-- `Shoulder-OS-V2.0.0-test-release.apk`
+- `Shoulder-OS-V2.1.0-test-release.apk`
 - `TennisVision-v0-debug.apk`
 
 ## 개발 관리 원칙
@@ -66,11 +68,11 @@ Google Drive의 `App Builds - Install` 폴더를 설치 파일의 기준 위치�
 `projects/tennis-vision/tennis_vision_v0.html` 을 브라우저에서 실행합니다.
 
 ### Shoulder OS
-현재 GitHub 이전 단계에서는 Google Drive의 V2.0.0 source ZIP이 전체 원본입니다. Flutter 프로젝트 트리 전개 후 빌드 절차를 이 README에 추가합니다.
+[Shoulder OS README](projects/shoulder-os/README.md)의 SDK/의존성/빌드 절차를 따릅니다.
 
 ## 테스트 상태
 
-- Shoulder OS: 당시 기록상 정적 검사 오류 0건, 자동 테스트 4/4, release APK 빌드 성공
+- Shoulder OS: V2.1 원본 보고서상 정적 검사 오류 0건, 자동 테스트 4/4, release APK 빌드 성공. 이번 소스 무결성/버전/스키마 검사 통과; Flutter SDK 부재로 재실행 미완료
 - Tennis Vision HTML: 현재 자동 테스트 미구성
 
 과거 테스트 기록은 기준선이며 GitHub 이전 후 재현 테스트가 필요합니다.
@@ -78,7 +80,7 @@ Google Drive의 `App Builds - Install` 폴더를 설치 파일의 기준 위치�
 ## 우선순위
 
 ### P0
-- Shoulder OS source ZIP 파일 단위 전개
+- Shoulder OS V2.1 SDK 환경 검증 및 실기기 업데이트/타이머 확인
 - Tennis Vision 최신 LocalEditor 전체 소스 회수
 - Repository Private 전환 검토
 - 각 프로젝트 빌드/실행 재현

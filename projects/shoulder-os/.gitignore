@@ -1,0 +1,16 @@
+.dart_tool/
+.packages
+.flutter-plugins*
+build/
+coverage/
+.idea/
+*.iml
+android/local.properties
+android/.gradle/
+**/GeneratedPluginRegistrant.java
+**/key.properties
+**/*.jks
+**/*.keystore
+*.apk
+*.aab
+*.sqlite*
