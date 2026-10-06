@@ -19,3 +19,5 @@
 - compile/target SDK 35 / minSdk 29
 - Kotlin 2.0.21
 - Media3 1.11.1
+
+현재 브랜치는 기존 APK와 충돌하지 않도록 별도 applicationId로 설치됩니다.
